@@ -1,0 +1,50 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  TEACHER
+  STUDENT
+}
+
+model User {
+  id           String        @id @default(uuid())
+  email        String        @unique
+  passwordHash String
+  name         String
+  role         Role          @default(TEACHER)
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  documents    Document[]
+  meetSessions MeetSession[]
+}
+
+model Document {
+  id           String        @id @default(uuid())
+  ownerId      String
+  title        String        @default("Untitled")
+  pages        Json          @default("[]")
+  fromLanguage String        @default("fr")
+  toLanguage   String        @default("en")
+  sharedToken  String?       @unique
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  owner        User          @relation(fields: [ownerId], references: [id])
+  meetSessions MeetSession[]
+}
+
+model MeetSession {
+  id        String   @id @default(uuid())
+  code      String   @unique @db.VarChar(20)
+  ownerId   String
+  docId     String?
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  owner     User     @relation(fields: [ownerId], references: [id])
+  document  Document? @relation(fields: [docId], references: [id])
+}
